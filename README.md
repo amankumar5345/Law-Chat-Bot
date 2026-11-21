@@ -323,8 +323,8 @@ streamlit run app.py
 
 ## 👨‍💻 Author
 
-**Himanshu** — AI/ML Developer
-- GitHub: [@himanshu9330](https://github.com/himanshu9330)
+**Aman** — AI/ML Developer
+- GitHub: [@amankumar5345](https://github.com/amankumar5345)
 
 ---
 
