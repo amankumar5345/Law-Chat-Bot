@@ -3,6 +3,6 @@ venv/
 __pycache__/
 .ipynb_checkpoints/
 *.pyc
-data/*.db
+data/*.db*
 data/*.sqlite*
 .streamlit/
