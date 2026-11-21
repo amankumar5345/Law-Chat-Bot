@@ -45,7 +45,12 @@ from ui.components import (
     render_structured_answer,
 )
 from utils.export import export_markdown, export_pdf
-from utils.helpers import format_timestamp, group_chats_by_date, sanitize_input
+from utils.helpers import (
+    format_timestamp,
+    get_width_kw,
+    group_chats_by_date,
+    sanitize_input,
+)
 
 
 # ── Database Initialization ───────────────────────────────────────────────
@@ -102,29 +107,18 @@ def render_sidebar() -> None:
         # App Header Brand
         st.markdown(
             """
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding: 4px 0;">
-                <div style="width: 42px; height: 42px; border-radius: 10px; background: linear-gradient(135deg, #1e3a8a, #d97706); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding: 6px 0;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #1e3a8a, #d97706); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 14px rgba(30, 58, 138, 0.4);">
                     ⚖️
                 </div>
                 <div>
-                    <h2 style="margin: 0; font-size: 1.3rem; font-weight: 800; letter-spacing: -0.5px;">LexAI</h2>
-                    <p style="margin: 0; font-size: 0.74rem; color: #94a3b8; font-weight: 500;">Bharat Legal Intelligence</p>
+                    <h2 style="margin: 0; font-size: 1.35rem; font-weight: 800; letter-spacing: -0.5px; color: #ffffff !important;">LexAI</h2>
+                    <p style="margin: 0; font-size: 0.74rem; color: #94a3b8 !important; font-weight: 500;">Bharat Legal Intelligence</p>
                 </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
-
-        # Quick Theme Selector
-        theme_col1, theme_col2 = st.columns([0.5, 0.5])
-        with theme_col1:
-            if st.button("☀️ Light", key="theme_light_btn", use_container_width=True, type="primary" if st.session_state["theme"] == "light" else "secondary"):
-                st.session_state["theme"] = "light"
-                st.rerun()
-        with theme_col2:
-            if st.button("🌙 Dark", key="theme_dark_btn", use_container_width=True, type="primary" if st.session_state["theme"] == "dark" else "secondary"):
-                st.session_state["theme"] = "dark"
-                st.rerun()
 
         user = st.session_state.get("user")
         user_id = user["id"] if user else None
@@ -132,7 +126,7 @@ def render_sidebar() -> None:
         # User Authentication status
         with st.expander(f"👤 Account: {user['username'] if user else 'Guest Mode'}", expanded=False):
             if user:
-                if st.button("Log Out", key="logout_btn", use_container_width=True):
+                if st.button("Log Out", key="logout_btn", **get_width_kw()):
                     st.session_state["user"] = None
                     st.rerun()
             else:
@@ -140,7 +134,7 @@ def render_sidebar() -> None:
                 with auth_tab1:
                     l_user = st.text_input("Username", key="login_u")
                     l_pass = st.text_input("Password", type="password", key="login_p")
-                    if st.button("Sign In", key="login_btn", use_container_width=True):
+                    if st.button("Sign In", key="login_btn", **get_width_kw()):
                         u_record = db.authenticate_user(l_user, l_pass)
                         if u_record:
                             st.session_state["user"] = u_record
@@ -151,7 +145,7 @@ def render_sidebar() -> None:
                 with auth_tab2:
                     r_user = st.text_input("New Username", key="reg_u")
                     r_pass = st.text_input("New Password", type="password", key="reg_p")
-                    if st.button("Create Account", key="reg_btn", use_container_width=True):
+                    if st.button("Create Account", key="reg_btn", **get_width_kw()):
                         if r_user and r_pass:
                             try:
                                 uid = db.create_user(r_user, r_pass)
@@ -161,10 +155,10 @@ def render_sidebar() -> None:
                             except Exception as e:
                                 st.error(f"Username already taken or error: {e}")
 
-        st.markdown("---")
+        st.markdown("<hr>", unsafe_allow_html=True)
 
         # New Consultation Button
-        if st.button("➕ New Consultation", key="new_chat_btn", use_container_width=True, type="primary"):
+        if st.button("➕ New Consultation", key="new_chat_btn", type="primary", **get_width_kw()):
             new_id = db.create_chat(user_id=user_id, title="New Consultation")
             st.session_state["current_chat_id"] = new_id
             st.session_state["nav_page"] = "💬 Legal Chat"
@@ -189,10 +183,10 @@ def render_sidebar() -> None:
             label_visibility="collapsed",
         )
 
-        st.markdown("---")
+        st.markdown("<hr>", unsafe_allow_html=True)
 
-        # Past Conversations List (if on chat page)
-        st.markdown("##### 📁 Past Consultations")
+        # Past Conversations List
+        st.markdown("<h5 style='color: #e2e8f0; margin-bottom: 8px;'>📁 Past Consultations</h5>", unsafe_allow_html=True)
 
         search_query = st.text_input("Search chats...", key="chat_search", placeholder="Filter topics...", label_visibility="collapsed")
         all_chats = db.search_chats(search_query, user_id=user_id) if search_query else db.get_chats(user_id=user_id)
@@ -209,12 +203,12 @@ def render_sidebar() -> None:
 
                 col_btn, col_pin, col_del = st.columns([0.74, 0.13, 0.13])
                 with col_btn:
-                    btn_type = "secondary" if not is_active else "primary"
+                    btn_type = "primary" if is_active else "secondary"
                     if st.button(
                         f"{'📌 ' if c.get('pinned') else ''}{title[:22]}",
                         key=f"chat_select_{cid}",
-                        use_container_width=True,
                         type=btn_type,
+                        **get_width_kw(),
                     ):
                         st.session_state["current_chat_id"] = cid
                         st.session_state["nav_page"] = "💬 Legal Chat"
@@ -234,15 +228,15 @@ def render_sidebar() -> None:
                             st.session_state["current_chat_id"] = remaining[0]["id"] if remaining else None
                         st.rerun()
 
-        st.markdown("<hr style='border-color: rgba(255,255,255,0.1); margin: 20px 0 14px 0;'>", unsafe_allow_html=True)
+        st.markdown("<hr>", unsafe_allow_html=True)
         st.markdown(
             """
-            <div style="background: rgba(255,255,255,0.05); padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
-                <div style="font-size: 0.76rem; font-weight: 700; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.5px;">
+            <div style="background: rgba(255,255,255,0.06); padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-size: 0.78rem; font-weight: 800; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.5px;">
                     🛡️ Privacy Guarantee
                 </div>
-                <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 3px; line-height: 1.35;">
-                    Chats are stored locally in your SQLite database. Zero third-party telemetry.
+                <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 4px; line-height: 1.4;">
+                    Consultations are stored locally in SQLite. Zero third-party telemetry.
                 </div>
             </div>
             """,
@@ -271,7 +265,7 @@ def render_chat_page() -> None:
     # Header Bar
     top_col1, top_col2, top_col3, top_col4 = st.columns([0.48, 0.20, 0.16, 0.16])
     with top_col1:
-        st.markdown(f"<h3 style='margin: 0; font-size: 1.35rem; font-weight: 700;'>⚖️ {chat_title}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='margin: 0; font-size: 1.35rem; font-weight: 800; color: #0f172a;'>⚖️ {chat_title}</h3>", unsafe_allow_html=True)
 
     with top_col2:
         # Answer detail toggle
@@ -296,7 +290,7 @@ def render_chat_page() -> None:
         with st.popover("⚙️ Options"):
             st.markdown("##### Consultation Options")
             new_title = st.text_input("Rename Consultation", value=chat_title)
-            if st.button("Save New Title", key="update_title_btn", use_container_width=True):
+            if st.button("Save New Title", key="update_title_btn", **get_width_kw()):
                 if new_title.strip():
                     db.update_chat_title(current_cid, new_title.strip())
                     st.rerun()
@@ -311,7 +305,7 @@ def render_chat_page() -> None:
                     data=full_md,
                     file_name=f"{chat_title.lower().replace(' ', '_')}.md",
                     mime="text/markdown",
-                    use_container_width=True,
+                    **get_width_kw(fn=st.download_button),
                 )
                 full_pdf = export_pdf(chat_title, curr_msgs)
                 st.download_button(
@@ -319,7 +313,7 @@ def render_chat_page() -> None:
                     data=full_pdf,
                     file_name=f"{chat_title.lower().replace(' ', '_')}.pdf",
                     mime="application/pdf",
-                    use_container_width=True,
+                    **get_width_kw(fn=st.download_button),
                 )
 
     messages = db.get_messages(current_cid)
@@ -416,14 +410,21 @@ def render_chat_page() -> None:
 # PAGE: 🔖 SAVED ANSWERS
 # ═══════════════════════════════════════════════════════════════════════════
 def render_saved_page() -> None:
-    st.markdown("## 🔖 Bookmarked Consultations & Guidance")
-    st.caption("Access all answers you have saved across your legal research sessions.")
+    st.markdown(
+        """
+        <div class="page-title-banner">
+            <h2>🔖 Bookmarked Consultations & Guidance</h2>
+            <p>Access all answers you have saved across your legal research sessions.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     user = st.session_state.get("user")
     bookmarks = db.get_bookmarks(user_id=user["id"] if user else None)
 
     if not bookmarks:
-        st.info("No saved answers yet. Click '⭐ Save' on any answer to bookmark it here.")
+        st.info("No saved answers yet. Click '⭐ Bookmark' on any answer in the chat to save it here.")
         return
 
     for bm in bookmarks:
@@ -433,7 +434,7 @@ def render_saved_page() -> None:
                 st.markdown(f"#### ⚖️ From: *{bm.get('chat_title', 'Consultation')}*")
                 st.caption(f"Saved on {format_timestamp(bm.get('created_at'))}")
             with b_col2:
-                if st.button("🗑️ Remove", key=f"del_bm_{bm['id']}"):
+                if st.button("🗑️ Remove", key=f"del_bm_{bm['id']}", **get_width_kw()):
                     db.remove_bookmark(bm["id"])
                     st.toast("Bookmark removed.")
                     st.rerun()
@@ -450,8 +451,15 @@ def render_saved_page() -> None:
 # PAGE: 📝 LEGAL DRAFT GENERATOR
 # ═══════════════════════════════════════════════════════════════════════════
 def render_drafts_page() -> None:
-    st.markdown("## 📝 Indian Legal Document & Notice Generator")
-    st.caption("Select a standard template, enter the facts, and generate a formal draft compliant with Indian legal procedure.")
+    st.markdown(
+        """
+        <div class="page-title-banner">
+            <h2>📝 Indian Legal Document & Notice Generator</h2>
+            <p>Select a standard template, enter the facts, and generate a formal draft compliant with Indian legal procedure.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     template_names = list(DRAFT_TEMPLATES.keys())
     selected_template_name = st.selectbox("Select Template", options=template_names)
@@ -469,7 +477,7 @@ def render_drafts_page() -> None:
             else:
                 field_values[field] = st.text_input(label)
 
-        submitted = st.form_submit_button("Generate Formal Legal Draft", type="primary")
+        submitted = st.form_submit_button("Generate Formal Legal Draft", type="primary", **get_width_kw())
 
     if submitted:
         # Check required fields
@@ -498,6 +506,7 @@ def render_drafts_page() -> None:
                 data=draft_text,
                 file_name=f"{selected_template_name.lower().replace(' ', '_')}.txt",
                 mime="text/plain",
+                **get_width_kw(fn=st.download_button),
             )
         with col_d2:
             st.download_button(
@@ -505,6 +514,7 @@ def render_drafts_page() -> None:
                 data=draft_text,
                 file_name=f"{selected_template_name.lower().replace(' ', '_')}.md",
                 mime="text/markdown",
+                **get_width_kw(fn=st.download_button),
             )
 
 
@@ -512,8 +522,15 @@ def render_drafts_page() -> None:
 # PAGE: 📄 DOCUMENT ANALYZER
 # ═══════════════════════════════════════════════════════════════════════════
 def render_document_analyzer_page() -> None:
-    st.markdown("## 📄 Legal Document & Contract Analyzer")
-    st.caption("Upload a rent agreement, FIR copy, or legal notice to extract risks, red flags, and plain-language clauses.")
+    st.markdown(
+        """
+        <div class="page-title-banner">
+            <h2>📄 Legal Document & Contract Analyzer</h2>
+            <p>Upload a rent agreement, FIR copy, or legal notice to extract risks, red flags, and plain-language clauses.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     uploaded_file = st.file_uploader("Upload legal document (PDF or TXT)", type=["pdf", "txt"])
 
@@ -539,7 +556,7 @@ def render_document_analyzer_page() -> None:
         with st.expander("Preview Extracted Text"):
             st.text(doc_text[:1200] + ("..." if len(doc_text) > 1200 else ""))
 
-        if st.button("🔍 Analyze Document for Risks & Rights", type="primary"):
+        if st.button("🔍 Analyze Document for Risks & Rights", type="primary", **get_width_kw()):
             with st.spinner("Analyzing clauses under Indian contract and procedural law..."):
                 prompt = DOCUMENT_SUMMARY.format(document_text=doc_text[:12000])
                 analysis = call_llm(
@@ -557,8 +574,15 @@ def render_document_analyzer_page() -> None:
 # PAGE: ⚙️ SETTINGS
 # ═══════════════════════════════════════════════════════════════════════════
 def render_settings_page() -> None:
-    st.markdown("## ⚙️ Application Settings & Configuration")
-    st.caption("Customize model parameters, retrieval thresholds, API keys, and privacy controls.")
+    st.markdown(
+        """
+        <div class="page-title-banner">
+            <h2>⚙️ Application Settings & Configuration</h2>
+            <p>Customize model parameters, retrieval thresholds, API keys, and privacy controls.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     tab_model, tab_keys, tab_privacy = st.tabs(["🤖 Model & RAG", "🔑 API Keys", "🛡️ Privacy & Data"])
 
@@ -600,7 +624,7 @@ def render_settings_page() -> None:
         k_pine = st.text_input("Pinecone API Key", value=st.session_state.get("pinecone_key", ""), type="password")
         k_serp = st.text_input("SerpAPI Key", value=st.session_state.get("serpapi_key", ""), type="password")
 
-        if st.button("Save API Keys"):
+        if st.button("Save API Keys", **get_width_kw()):
             st.session_state["groq_key"] = k_groq.strip()
             st.session_state["pinecone_key"] = k_pine.strip()
             st.session_state["serpapi_key"] = k_serp.strip()
@@ -616,7 +640,7 @@ def render_settings_page() -> None:
         with st.container(border=True):
             st.markdown("⚠️ **Danger Zone**")
             st.caption("Permanently delete all consultation history, bookmarks, and saved feedback.")
-            if st.button("🗑️ Delete All My Data", type="primary"):
+            if st.button("🗑️ Delete All My Data", type="primary", **get_width_kw()):
                 user = st.session_state.get("user")
                 db.clear_all_data(user_id=user["id"] if user else None)
                 st.session_state["current_chat_id"] = None
@@ -630,9 +654,16 @@ page = st.session_state.get("nav_page", "💬 Legal Chat")
 if page == "💬 Legal Chat":
     render_chat_page()
 elif page == "⚖️ BNS ⇄ IPC Cross-Reference":
-    st.markdown("## ⚖️ Bharatiya Nyaya Sanhita (BNS) ⇄ IPC & BNSS ⇄ CrPC")
-    st.caption("Interactive search & reference matrix for India's 2024 criminal law transition.")
-    render_bns_ipc_matrix()
+    st.markdown(
+        """
+        <div class="page-title-banner">
+            <h2>⚖️ Bharatiya Nyaya Sanhita (BNS) ⇄ IPC & BNSS ⇄ CrPC</h2>
+            <p>Interactive search & reference matrix for India's 2024 criminal law transition.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    render_bns_ipc_matrix(in_expander=False)
 elif page == "🔖 Saved Answers":
     render_saved_page()
 elif page == "📝 Legal Draft Generator":

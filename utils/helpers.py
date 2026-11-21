@@ -3,9 +3,28 @@ Utility / helper functions used across LexAI.
 Formatting, date grouping, text sanitization, parsing.
 """
 
+import inspect
 import re
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Callable, Optional
+
+
+# ── Streamlit compatibility helper ───────────────────────────────────────
+
+def get_width_kw(stretch: bool = True, fn: Optional[Callable] = None) -> dict[str, Any]:
+    """
+    Return kwargs for full-width layout compatible across Streamlit versions.
+    Uses 'width=\"stretch\"' on newer Streamlit (1.67+), falling back to 'use_container_width=True'.
+    """
+    try:
+        import streamlit as st
+        target_fn = fn or st.button
+        sig = inspect.signature(target_fn)
+        if "width" in sig.parameters:
+            return {"width": "stretch" if stretch else "content"}
+    except Exception:
+        pass
+    return {"use_container_width": stretch}
 
 
 # ── Date / time helpers ──────────────────────────────────────────────────

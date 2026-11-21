@@ -6,12 +6,20 @@ confidence trends, and user satisfaction metrics.
 
 from typing import Any, Optional
 import streamlit as st
+from utils.helpers import get_width_kw
 
 
 def render_analytics_page(db: Any, user_id: Optional[int] = None) -> None:
     """Render comprehensive analytics dashboard with Plotly charts."""
-    st.markdown("## 📊 LexAI Intelligence & Usage Analytics")
-    st.caption("Insights into legal query patterns, risk severity, retrieval sources, and system confidence.")
+    st.markdown(
+        """
+        <div class="page-title-banner">
+            <h2>📊 LexAI Intelligence & Usage Analytics</h2>
+            <p>Insights into legal query patterns, risk severity, retrieval sources, and system confidence.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     try:
         import plotly.express as px
@@ -37,7 +45,7 @@ def render_analytics_page(db: Any, user_id: Optional[int] = None) -> None:
 
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
     with kpi1:
-        st.metric(label="Total Queries Answered", value=total_queries, delta=f"{total_queries} queries")
+        st.metric(label="Total Queries Answered", value=total_queries, delta=f"{total_queries} total")
     with kpi2:
         st.metric(label="User Satisfaction Rate", value=f"{satisfaction_rate}%", delta=f"{pos} positive")
     with kpi3:
@@ -82,7 +90,7 @@ def render_analytics_page(db: Any, user_id: Optional[int] = None) -> None:
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
             )
-            st.plotly_chart(fig_donut, use_container_width=True)
+            st.plotly_chart(fig_donut, **get_width_kw(fn=st.plotly_chart))
         else:
             st.info("No risk classification data yet. Ask questions in the chat to see insights.")
 
@@ -114,7 +122,7 @@ def render_analytics_page(db: Any, user_id: Optional[int] = None) -> None:
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
             )
-            st.plotly_chart(fig_pie, use_container_width=True)
+            st.plotly_chart(fig_pie, **get_width_kw(fn=st.plotly_chart))
         else:
             st.info("No source distribution data yet. Ask questions in the chat to populate.")
 
@@ -142,7 +150,7 @@ def render_analytics_page(db: Any, user_id: Optional[int] = None) -> None:
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
             )
-            st.plotly_chart(fig_line, use_container_width=True)
+            st.plotly_chart(fig_line, **get_width_kw(fn=st.plotly_chart))
         else:
             st.info("Query volume timeline will populate as messages are sent.")
 
@@ -166,6 +174,6 @@ def render_analytics_page(db: Any, user_id: Optional[int] = None) -> None:
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
             )
-            st.plotly_chart(fig_conf, use_container_width=True)
+            st.plotly_chart(fig_conf, **get_width_kw(fn=st.plotly_chart))
         else:
             st.info("Confidence score timeline will display once RAG queries run.")
