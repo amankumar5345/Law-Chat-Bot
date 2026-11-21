@@ -29,6 +29,7 @@ from core.config import (
     RAG_THRESHOLD,
     RAG_TOP_K,
     SERPAPI_API_KEY,
+    save_env_key,
 )
 from core.llm import call_llm, generate_chat_title
 from core.pipeline import run_query
@@ -589,6 +590,9 @@ def render_settings_page() -> None:
     with tab_model:
         st.markdown("##### LLM & Retrieval Configuration")
         model_options = [
+            "qwen/qwen3.8-27b",
+            "openai/gpt-oss-120b",
+            "openai/gpt-oss-20b",
             "llama-3.3-70b-versatile",
             "llama-3.1-8b-instant",
             "mixtral-8x7b-32768",
@@ -617,7 +621,7 @@ def render_settings_page() -> None:
         )
 
     with tab_keys:
-        st.markdown("##### API Keys (Stored in memory for this session)")
+        st.markdown("##### API Keys (Stored in memory and local .env)")
         st.caption("You can configure your keys here or via the `.env` file.")
 
         k_groq = st.text_input("Groq API Key", value=st.session_state.get("groq_key", ""), type="password")
@@ -625,10 +629,16 @@ def render_settings_page() -> None:
         k_serp = st.text_input("SerpAPI Key", value=st.session_state.get("serpapi_key", ""), type="password")
 
         if st.button("Save API Keys", **get_width_kw()):
-            st.session_state["groq_key"] = k_groq.strip()
-            st.session_state["pinecone_key"] = k_pine.strip()
-            st.session_state["serpapi_key"] = k_serp.strip()
-            st.success("API keys updated for this session!")
+            g_key = k_groq.strip().strip("\"' ")
+            p_key = k_pine.strip().strip("\"' ")
+            s_key = k_serp.strip().strip("\"' ")
+            st.session_state["groq_key"] = g_key
+            st.session_state["pinecone_key"] = p_key
+            st.session_state["serpapi_key"] = s_key
+            save_env_key("GROQ_API_KEY", g_key)
+            save_env_key("PINECONE_API_KEY", p_key)
+            save_env_key("SERPAPI_API_KEY", s_key)
+            st.success("API keys updated and saved to local .env file!")
 
     with tab_privacy:
         st.markdown("##### Data Retention & Local SQLite Storage")

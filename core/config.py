@@ -4,26 +4,66 @@ Every module imports from here rather than reading os.environ directly.
 """
 
 import os
+import re
 from pathlib import Path
 from dotenv import load_dotenv
-
-load_dotenv()
 
 # ── Paths ────────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
+# Try loading .env from multiple candidate locations
+candidate_env_paths = [
+    BASE_DIR / ".env",
+    BASE_DIR.parent / ".env",
+    Path.cwd() / ".env",
+]
+for env_path in candidate_env_paths:
+    if env_path.exists():
+        load_dotenv(dotenv_path=env_path, override=False)
+
+# Fallback: check if user added key to .env.example
+if not os.getenv("GROQ_API_KEY"):
+    for ex_path in [BASE_DIR / ".env.example", BASE_DIR.parent / ".env.example"]:
+        if ex_path.exists():
+            with open(ex_path, "r", encoding="utf-8") as f:
+                content = f.read()
+                m = re.search(r"GROQ_API_KEY\s*=\s*(gsk_[A-Za-z0-9_]+)", content)
+                if m:
+                    os.environ["GROQ_API_KEY"] = m.group(1).strip()
+                    break
+
 # ── API Keys ─────────────────────────────────────────────────────────────
-GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
-PINECONE_API_KEY: str = os.getenv("PINECONE_API_KEY", "")
-SERPAPI_API_KEY: str = os.getenv("SERPAPI_API_KEY", "")
+GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "").strip("\"' ")
+PINECONE_API_KEY: str = os.getenv("PINECONE_API_KEY", "").strip("\"' ")
+SERPAPI_API_KEY: str = os.getenv("SERPAPI_API_KEY", "").strip("\"' ")
 
 # ── Model settings ───────────────────────────────────────────────────────
-GROQ_MODEL: str = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_MODEL: str = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b").strip("\"' ")
 EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
 PINECONE_INDEX: str = "law-suggestion-index"
 LLM_TEMPERATURE: float = 0.3
+
+
+def save_env_key(key: str, value: str) -> None:
+    """Save an API key to the local .env file."""
+    env_file = BASE_DIR / ".env"
+    lines = []
+    found = False
+    if env_file.exists():
+        with open(env_file, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        for i, line in enumerate(lines):
+            if line.strip().startswith(f"{key}="):
+                lines[i] = f"{key}={value.strip()}\n"
+                found = True
+                break
+    if not found:
+        lines.append(f"{key}={value.strip()}\n")
+    with open(env_file, "w", encoding="utf-8") as f:
+        f.writelines(lines)
+    os.environ[key] = value.strip()
 
 # ── RAG settings ─────────────────────────────────────────────────────────
 RAG_THRESHOLD: float = float(os.getenv("RAG_THRESHOLD", "0.5"))
