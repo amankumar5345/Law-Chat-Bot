@@ -1,9 +1,8 @@
 # ⚖️ LexAI — AI-Powered Legal Assistant for Indian Law
 
-> An intelligent, production-grade legal intelligence assistant for Indian law — combining **LangGraph multi-stage DAG workflow**, **Pinecone cluster-aware RAG**, **SerpAPI live web fallback**, and **Groq LLM inference**, wrapped in a modern, interactive **Streamlit** user experience.
+> An intelligent, multi-stage AI pipeline that classifies legal queries, retrieves context-aware answers via RAG, falls back to live web search, and generates structured legal guidance using Groq LLM — all orchestrated through a LangGraph workflow.
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)](https://python.org)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.30+-red?logo=streamlit)](https://streamlit.io)
 [![LangGraph](https://img.shields.io/badge/LangGraph-Workflow-orange)](https://github.com/langchain-ai/langgraph)
 [![Groq](https://img.shields.io/badge/Groq-LLM-green)](https://groq.com)
 [![Pinecone](https://img.shields.io/badge/Pinecone-VectorDB-purple)](https://www.pinecone.io)
@@ -11,156 +10,328 @@
 
 ---
 
-## 🌟 Overview & Key Capabilities
+## 🚀 What Is LexAI?
 
-LexAI bridges the gap between complex Indian statutes (Bharatiya Nyaya Sanhita / IPC, Bharatiya Nagarik Suraksha Sanhita / CrPC, Consumer Protection, Labour Codes) and ordinary citizens.
+**LexAI** is a production-grade AI Legal Assistant that helps users navigate Indian law — from understanding their legal rights to planning actionable next steps. It combines **Retrieval-Augmented Generation (RAG)**, **live web search (SerpAPI)**, and **Groq's fast LLM inference** into a single, intelligent pipeline.
 
-### 🎯 Features
+### 🎯 Key Capabilities
 
-1. **🏛️ Multi-Stage Pipeline Orchestration (LangGraph)**
-   - **Domain Classifier**: Routes legal vs. general inquiries.
-   - **Query Refiner**: Injects Indian statutory keywords and jurisdiction context.
-   - **Risk Classifier**: Categorizes risk into 🟢 Low, 🟡 Medium, or 🔴 High with reasoning.
-   - **Cluster-Aware RAG Engine**: 2-stage retrieval over Pinecone vector clusters.
-   - **SerpAPI Fallback**: Gated by similarity confidence score threshold.
-   - **Legal Expert Synthesis**: Structured advice under Indian law with rights and citations.
-
-2. **💬 Rich Interactive Chat Interface**
-   - **Visual Risk Badges & Confidence Meters**: Color-coded risk pills and RAG vs. Web source badges.
-   - **Structured Section Tabs**: Summary | Relevant Laws | Action Roadmap | Rights & Notes | Sources.
-   - **Interactive Action Roadmap**: Vertical stepper with clickable checklist boxes saved in SQLite.
-   - **"Lawyer Needed?" Card**: Required / Optional / Not Needed badge with clear justification.
-   - **Follow-up Suggestions**: Contextual questions generated after each response.
-   - **Pipeline Transparency Expander**: "How I Answered This" inspection of DAG execution and latency.
-
-3. **💾 Local SQLite History & Persistence**
-   - Conversations categorized into **Today**, **Yesterday**, **Last 7 days**, and **Older**.
-   - Pin, rename, delete, and search across consultations.
-   - Auto-generated chat titles from the opening inquiry.
-   - Guest mode default + optional user registration and authentication.
-
-4. **📝 Legal Document & Notice Generator**
-   - Instant drafts for **RTI Applications**, **Police Complaints for FIR**, **Consumer Complaints**, and **Legal Notices**.
-   - Form-based parameter input with downloadable `.txt` and `.md` outputs.
-
-5. **📄 Contract & Document Analyzer**
-   - Upload agreements, FIR copies, or notices (PDF/TXT).
-   - Automated plain-language breakdown of key parties, risky clauses, red flags, and recommendations.
-
-6. **📊 Analytics Dashboard**
-   - Built with **Plotly**: Risk severity donut, RAG vs. Web fallback ratio, query volume timeline, and confidence score trends.
-
-7. **🚨 Emergency Helplines & Glossary**
-   - Direct access to national helplines: Police (112), Women in Distress (181), Cyber Fraud (1930), Free Legal Aid (15100), Consumer Grievance (1915).
-   - Searchable legal glossary with plain-language definitions for legal jargon.
-
-8. **📤 Export & Sharing**
-   - Export consultation reports as branded **PDF** or formatted **Markdown**.
+- 🏛️ **Domain Classification** — Routes legal vs. non-legal queries intelligently
+- ⚠️ **Risk Assessment** — Classifies query risk as Low / Medium / High
+- 📚 **RAG Engine** — Semantic search over vectorized Indian legal documents
+- 🌐 **SerpAPI Fallback** — Live web context when RAG confidence is low
+- 🤖 **LLM Synthesis** — Groq-powered structured legal response generation
+- 🗺️ **Action Roadmap** — Step-by-step legal procedure guidance
+- 👨‍⚖️ **Lawyer Recommendation** — Yes / Optional / No, with reasoning
+- 🛡️ **Built-in Disclaimer** — Responsible AI legal guidance
 
 ---
 
-## 🏗️ Architecture & Project Structure
+## 🧠 Architecture Overview
 
-```
-LAW_chat_bot-main/
-├── app.py                   # Master Streamlit application
-├── requirements.txt         # Core dependencies
-├── .env.example             # Environment variable template
-├── README.md                # Documentation & setup guide
-│
-├── core/                    # Refactored pipeline & inference logic
-│   ├── config.py            # Global settings & constants
-│   ├── prompts.py           # Structured prompts & draft templates
-│   ├── llm.py               # Groq LLM integration & streaming
-│   ├── rag.py               # Pinecone cluster retrieval & SentenceTransformers
-│   ├── search.py            # SerpAPI India-restricted search
-│   └── pipeline.py          # LangGraph DAG & event-driven run_query()
-│
-├── db/                      # SQLite persistence layer
-│   └── database.py          # Thread-safe tables: chats, messages, bookmarks, progress
-│
-├── ui/                      # Streamlit UI & visual styling
-│   ├── components.py        # Structured answer cards, hero, badges, roadmaps
-│   ├── analytics.py         # Plotly analytics dashboard
-│   └── styles.css           # Custom theme tokens & glassmorphism styling
-│
-├── utils/                   # Helpers & document generators
-│   ├── helpers.py           # Parsing, date grouping, risk formatters
-│   └── export.py            # PDF & Markdown export generators
-│
-├── data/                    # Local storage (lexai.db)
-│   └── .gitkeep
-│
-└── agent.ipynb              # Original research notebook (preserved)
+### High-Level Workflow Orchestration
+
+The pipeline is orchestrated as a **Directed Acyclic Graph (DAG)** using LangGraph, enabling dynamic execution paths, robust fallback mechanisms, and structured generation.
+
+```mermaid
+flowchart TD
+    %% Styling
+    classDef userNode fill:#e1f5fe,stroke:#039be5,stroke-width:2px,color:#01579b
+    classDef aiNode fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#4a148c
+    classDef dataNode fill:#e8f5e9,stroke:#43a047,stroke-width:2px,color:#1b5e20
+    classDef decision fill:#fff3e0,stroke:#fb8c00,stroke-width:2px,color:#e65100
+
+    U([👤 User Query]):::userNode -->|Submits Query| DC[🔍 Domain Classifier Node]:::aiNode
+    DC -->|Non-Law Query| DIR[⚡ Direct LLM Response]:::aiNode
+    DC -->|Law Query| QR[✏️ Query Refinement Node]:::aiNode
+    
+    QR -->|Contextualized Query| RC[⚠️ Risk Classifier Node]:::aiNode
+    RC -->|Assigns Risk: Low/Med/High| RAG{📚 RAG Engine<br>Score >= Threshold?}:::decision
+    
+    RAG -->|Yes: High Confidence| VD[(Pinecone Vector DB)]:::dataNode
+    VD -->|Returns Top-k Docs| CM[🧩 Context Merge Node]:::aiNode
+    
+    RAG -->|No: Low Confidence| SERP[🌐 SerpAPI Fallback]:::aiNode
+    SERP -->|Fetches Live Web Data| CM
+    
+    CM -->|Aggregated Context + Risk| LLM[🤖 Legal Expert LLM - Groq]:::aiNode
+    
+    LLM -->|Synthesizes| OUT[📋 Structured Output Generation]:::aiNode
+    DIR -->|Standard Answer| RES([💬 System Response]):::userNode
+    OUT -->|Answer, Roadmap, Lawyer Flag| RES
 ```
 
 ---
 
-## 🚀 Quickstart & Setup
+## 🧩 Core Components
 
-### 1. Prerequisites
-- Python 3.10+
-- Groq API Key ([console.groq.com](https://console.groq.com))
-- Pinecone API Key ([pinecone.io](https://www.pinecone.io)) *(optional if testing in fallback mode)*
-- SerpAPI Key ([serpapi.com](https://serpapi.com)) *(optional)*
+### 1. 🔍 Domain Classifier
+- Determines if a query is **law-related** or **general**
+- Legal queries proceed through the full pipeline
+- Non-legal queries get a direct LLM response for efficiency
 
-### 2. Installation
+### 2. ✏️ Query Refiner
+- Transforms raw user input into a **structured legal query**
+- Adds jurisdiction context (Indian Law)
+- Improves retrieval precision
+
+### 3. ⚠️ Risk Classifier
+- Categorizes the legal scenario as:
+  - 🟢 **Low** — Informational, no immediate legal threat
+  - 🟡 **Medium** — Procedural concern, may require legal advice
+  - 🔴 **High** — Urgent, rights at risk, lawyer strongly recommended
+
+### 4. 📚 RAG Engine
+- Performs **cluster-aware semantic search** over Pinecone
+- Returns top-k relevant legal document chunks
+- Threshold-based confidence gating — only uses RAG if score is high enough
+
+### 5. 🌐 SerpAPI Fallback
+- Activates when RAG similarity score is below threshold
+- Fetches live, up-to-date legal information from the web
+- Provides real-world context for niche or recent legal issues
+
+### 6. 🤖 Legal Expert LLM (Groq)
+- Final synthesis node powered by **Groq's ultra-fast LLM inference**
+- Receives merged context (RAG + SERP) + risk classification
+- Generates a 4-part structured response
+
+### 7. 🗺️ Roadmap Generator *(within LLM node)*
+- Produces numbered, actionable steps tailored to the user's legal situation
+- Guides users through evidence collection, filing procedures, and escalation
+
+---
+
+## 🗄️ Data Flow Architecture (DFD)
+
+### Level 0 Context & Level 1 System Flow
+The data engineering pipeline incorporates Indian legal text vectorization, dynamic context resolution, and intelligent fallback fetching.
+
+```mermaid
+flowchart TD
+    %% Styling
+    classDef userNode fill:#e1f5fe,stroke:#039be5,stroke-width:2px,color:#01579b
+    classDef processNode fill:#e0f7fa,stroke:#00acc1,stroke-width:2px,color:#006064
+    classDef dataStore fill:#e8f5e9,stroke:#43a047,stroke-width:2px,color:#1b5e20
+    classDef external fill:#fce4ec,stroke:#d81b60,stroke-width:2px,color:#880e4f
+
+    U([User]):::userNode -->|1. Raw Input| P1((Process 1:<br>Domain & Risk Analysis)):::processNode
+    P1 -->|2. Refined Query & Risk Tag| P2((Process 2:<br>Context Retrieval)):::processNode
+    
+    %% Ingestion Pipeline (side process)
+    subgraph Offline Ingestion
+        RAW[Legal PDFs] -->|PyPDF + Splitter| EMB[SentenceTransformers]
+        EMB -->|KMeans Clustering| UP[Upsert Job]
+    end
+    UP -.->|Vectors + Cluster IDs| DS1
+    
+    P2 <-->|3. Vector Search & Similarity Match| DS1[(Data Store 1:<br>Pinecone Legal Vectors)]:::dataStore
+    P2 <-->|4. Live HTTP Search| EX1[External API:<br>SerpAPI]:::external
+    
+    P2 -->|5. Retrieved Context Sources| P3((Process 3:<br>Context Merging)):::processNode
+    P3 -->|6. Unified Context Payload| P4((Process 4:<br>Response Generation)):::processNode
+    
+    P4 <-->|7. Prompt Synthesis| EX2[External API:<br>Groq LLM]:::external
+    P4 -->|8. Structured Markdown Guidance| U
+```
+---
+
+## 🔍 Retrieval Strategy
+
+### Semantic Search
+- Uses `sentence-transformers` to embed the refined user query
+- Computes cosine similarity against stored Pinecone vectors
+- Returns `top-k` most relevant legal chunks
+
+### Cluster-Based Retrieval
+- Documents are pre-clustered using **KMeans** during ingestion
+- Cluster IDs stored as metadata in Pinecone
+- Enables **namespace/cluster-filtered** retrieval for precision:
+  - Query is assigned to its nearest cluster
+  - Retrieval is scoped to that cluster for higher relevance
+
+---
+
+## 🧠 AI Features
+
+| Feature | Description |
+|---|---|
+| **Legal Reasoning** | Contextual, multi-step legal analysis using Groq LLM |
+| **Risk Detection** | Severity classification based on query semantics |
+| **Hybrid Retrieval** | RAG + live web search for maximum coverage |
+| **Context-Aware Answers** | Merged context ensures grounded, factual responses |
+| **Structured Output** | Consistent format: answer + roadmap + lawyer flag + disclaimer |
+| **Query Refinement** | LLM pre-processes raw queries for better retrieval accuracy |
+
+---
+
+## ⚡ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Workflow Orchestration** | LangGraph |
+| **LLM Inference** | Groq (Llama 3 / Mixtral) |
+| **Embeddings** | SentenceTransformers (`all-MiniLM-L6-v2`) |
+| **Vector Database** | Pinecone |
+| **Clustering** | Scikit-learn (KMeans) |
+| **Web Search Fallback** | SerpAPI |
+| **Document Loader** | PyPDF (LangChain) |
+| **LangChain Modules** | langchain, langchain-community, langchain-groq, langchain-huggingface |
+| **Environment Management** | python-dotenv |
+| **Notebook Runtime** | Jupyter / IPython |
+| **Language** | Python 3.10+ |
+
+---
+
+## 📂 Project Structure
+
+```
+law_suggestion/
+│
+├── agent.ipynb              # Main LangGraph pipeline (all nodes + workflow)
+├── requirement.txt          # All Python dependencies
+├── .env                     # API keys (Groq, Pinecone, SerpAPI) — not committed
+├── .gitignore               # Ignores venv, .env, caches
+│
+└── venv/                    # Python virtual environment (not tracked)
+```
+
+---
+
+## 🔄 End-to-End Execution Flow
+
+1. **User submits a query** (e.g., *"My landlord locked me out. What are my rights?"*)
+2. **Domain Classifier** identifies it as a legal query → proceeds to full pipeline
+3. **Query Refiner** restructures it: *"Tenant rights during illegal eviction under Indian Rent Control Act"*
+4. **Risk Classifier** tags it as 🔴 **High Risk** (rights being actively violated)
+5. **RAG Node** embeds the refined query and searches Pinecone
+   - If similarity score ≥ threshold → uses retrieved legal document chunks
+   - Else → **SerpAPI Fallback** fetches live web results
+6. **Context Merge** combines RAG and SERP results into a single context block
+7. **Legal Expert LLM** (Groq) processes context + risk level and generates:
+   - ✅ Legal Explanation (what the law says)
+   - 🗺️ Action Roadmap (steps to take)
+   - 👨‍⚖️ Lawyer Needed: **Yes** (with justification)
+   - ⚠️ Disclaimer (AI is not a substitute for legal counsel)
+8. **Response returned** to user in structured, readable format
+
+---
+
+## 📝 Sample Execution
+
+**Question**: *"What are the rights of women during police investigation?"*
+
+### 🛠️ Agent Execution Logs
+```text
+🔍 Refined Query: "Rights of women during police investigation under Indian Law, Section 160 and 161 of CrPC, and guidelines by High Court of India"
+⚖️ Risk Assessment: LOW
+🎯 Best cluster matched: Cluster 14. Going deeper...
+✅ High confidence (0.64). Moving to Roadmap...
+🗺️ Generating legal roadmap...
+⚖️ Finalizing expert response (Strictly Indian Law)...
+
+--- AGENT EXECUTION COMPLETE ---
+```
+
+### ⚖️ Final Expert Response
+
+> **Disclaimer**: The information provided is for general guidance only and should not be considered as legal advice. It is recommended to consult a qualified lawyer for specific and personalized advice.
+> 
+> **Lawyer Requirement**: **Optional** - While a lawyer is not mandatory, it is highly recommended to have one for proper guidance and representation during the police investigation.
+> 
+> **Legal Summary**: In India, women have the right to be treated with dignity and respect during police investigations. The police are required to follow certain procedures to ensure that women are not harassed or intimidated during the investigation process.
+> 
+> **Relevant Laws**: The Indian Penal Code (IPC), 1860, and the Code of Criminal Procedure (CrPC), 1973, are relevant laws that govern the investigation process.
+> 
+> **Step-by-step Action Roadmap**:
+> 1. If a woman wants to file a complaint, she can approach the police station and provide a written complaint.
+> 2. The police are required to register a First Information Report (FIR) under Section 154 of the CrPC.
+> 3. The police will then conduct an investigation, during which they may ask questions and collect evidence.
+> 4. The woman has the right to have a lawyer present during the investigation.
+> 5. The police are required to provide a copy of the FIR to the woman and keep her informed about the progress of the investigation.
+> 
+> **Important Rights / Notes**:
+> - The right to dignity and respect during the investigation process.
+> - The right to have a lawyer present during the investigation.
+> - The right to receive a copy of the FIR.
+> - The right to be kept informed about the progress of the investigation.
+> - The police are required to provide assistance to the woman if she chooses to file a complaint under the Indian Penal Code or any other law.
+> 
+> **Final Note**: It is essential to remember that the police investigation process should be fair, impartial, and respectful. If a woman feels that her rights are being violated or that she is being harassed during the investigation, she should immediately seek help from a lawyer or a women's rights organization.
+
+---
+
+## 🛡️ Safety & Guardrails
+
+### Legal Disclaimer
+Every response includes a mandatory disclaimer:
+> *"This response is generated by an AI system and is for informational purposes only. It does not constitute legal advice. Please consult a qualified legal professional for your specific situation."*
+
+### Risk-Based Escalation
+- **High Risk** → Always recommends consulting a lawyer
+- **Medium Risk** → Recommends optional legal consultation
+- **Low Risk** → Self-service guidance provided
+
+### RAG Confidence Gating
+- Responses are only sourced from RAG if retrieval score exceeds a defined threshold
+- Below threshold: falls back to SerpAPI, preventing hallucinated legal answers
+
+---
+
+## 🔧 Setup & Installation
 
 ```bash
-# Clone or navigate to the repository
-cd LAW_chat_bot-main
+# 1. Clone the repository
+git clone https://github.com/amankumar5345/Law-Chat-Bot.git
+cd Law-Chat-Bot
 
-# Create and activate virtual environment
+# 2. Create and activate virtual environment
 python -m venv venv
-# On Windows:
-venv\Scripts\activate
-# On Linux/macOS:
-source venv/bin/activate
+venv\Scripts\activate        # Windows
+source venv/bin/activate     # macOS/Linux
 
-# Install dependencies
+# 3. Install dependencies
 pip install -r requirements.txt
-```
 
-### 3. Environment Configuration
+# 4. Configure environment variables
+# Create a .env file with the following:
+GROQ_API_KEY=your_groq_api_key
+PINECONE_API_KEY=your_pinecone_api_key
+SERPAPI_API_KEY=your_serpapi_key
 
-Create a `.env` file in the project root:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` with your API credentials:
-
-```ini
-GROQ_API_KEY=gsk_your_groq_api_key_here
-PINECONE_API_KEY=your_pinecone_api_key_here
-SERPAPI_API_KEY=your_serpapi_api_key_here
-
-GROQ_MODEL=llama-3.3-70b-versatile
-RAG_THRESHOLD=0.5
-RAG_TOP_K=3
-```
-
-*(Note: You can also enter and update your API keys directly inside the **Settings** tab in the running app!)*
-
-### 4. Run the Streamlit Application
-
-```bash
+# 5. Launch the Streamlit application or Jupyter Notebook
 streamlit run app.py
+# or: jupyter notebook agent.ipynb
 ```
-
-The app will open automatically in your browser at `http://localhost:8501`.
 
 ---
 
-## 🛡️ Trust & Safety Guardrails
+## 🚀 Future Improvements
 
-- **Mandatory Disclaimer**: Every response includes an explicit notice that LexAI provides general legal information and not formal legal advice.
-- **Strict Jurisdiction Restriction**: The LLM prompt explicitly prevents citations of foreign (US/UK) laws and restricts legal summaries to Indian statutes.
-- **Zero Third-Party Trackers**: All conversation history, user preferences, and feedback are saved strictly in your local `data/lexai.db` SQLite database.
+| Feature | Description |
+|---|---|
+| 🌐 **Multi-language Support** | Hindi, Tamil, Bengali legal queries via translation layer |
+| 📜 **Larger Legal Corpus** | Include IPC, CrPC, Constitution, Consumer Protection Act |
+| 🔄 **Real-time Legal Updates** | Automated ingestion of new judgements and amendments |
+| 🖥️ **Web UI** | Streamlit or Next.js frontend for end-user interaction |
+| 📊 **Analytics Dashboard** | Query trends, risk distribution, common legal domains |
+| 🔐 **User Authentication** | Secure sessions and query history |
+| 🧪 **Evaluation Framework** | RAGAS-based RAG evaluation and LLM output scoring |
+| 📱 **Mobile App** | React Native app for on-the-go legal assistance |
+
+---
+
+## 👨‍💻 Author
+
+**Himanshu** — AI/ML Developer
+- GitHub: [@himanshu9330](https://github.com/himanshu9330)
 
 ---
 
 ## 📄 License
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+---
+
+> ⚠️ **Disclaimer**: LexAI is an AI-powered tool for informational purposes only. It does not constitute legal advice. Always consult a qualified legal professional for matters affecting your rights.
